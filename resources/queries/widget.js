@@ -13,8 +13,17 @@
         render() {
             super.render();
 
-            // Add table sort button in status bar
-            let tableSortState = 'none'; // 'none', 'asc', 'desc'
+            // Table filter toolbar (hidden by default, toggled via "N tables" in status bar)
+            this.tableToolbar = document.createElement('div');
+            this.tableToolbar.classList.add(csscls('toolbar'), csscls('table-toolbar'));
+            this.tableToolbar.hidden = true;
+            this.toolbar.after(this.tableToolbar);
+
+            this.tableFilters = [];
+            this.excludedTables = [];
+
+            // Table sort + filter toolbar
+            let tableSortState = 'none';
             let originalTableData = null;
 
             this.bindAttr('data', (data) => {
@@ -22,19 +31,63 @@
                     return;
                 }
 
-                // Count unique tables from statements
-                const tables = new Set();
+                // Reset table filter toolbar
+                this.tableFilters = [];
+                this.excludedTables = [];
+                this.tableToolbar.hidden = true;
+                this.tableToolbar.innerHTML = '';
+
+                // Collect unique table names from data
                 for (const stmt of data.statements) {
-                    if (stmt.table) {
-                        tables.add(stmt.table);
+                    if (stmt.table && !this.tableFilters.includes(stmt.table)) {
+                        this.tableFilters.push(stmt.table);
                     }
                 }
 
-                if (tables.size > 0) {
+                // Build table filter buttons
+                for (const tableName of this.tableFilters) {
+                    const filterLink = document.createElement('a');
+                    filterLink.classList.add(csscls('filter'));
+                    filterLink.textContent = tableName;
+                    filterLink.setAttribute('rel', tableName);
+                    filterLink.addEventListener('click', () => this.onTableFilterClick(filterLink));
+                    this.tableToolbar.append(filterLink);
+                }
+
+                // Add All / None toggle buttons
+                if (this.tableFilters.length > 1) {
+                    const allBtn = document.createElement('a');
+                    allBtn.classList.add(csscls('filter'), csscls('table-toggle'));
+                    allBtn.textContent = 'All';
+                    allBtn.addEventListener('click', () => this.setAllTablesVisible(true));
+
+                    const noneBtn = document.createElement('a');
+                    noneBtn.classList.add(csscls('filter'), csscls('table-toggle'));
+                    noneBtn.textContent = 'None';
+                    noneBtn.addEventListener('click', () => this.setAllTablesVisible(false));
+
+                    this.tableToolbar.prepend(noneBtn);
+                    this.tableToolbar.prepend(allBtn);
+                }
+
+                // Table count + sort in status bar
+                if (this.tableFilters.length > 0) {
                     const tableSpan = document.createElement('span');
                     tableSpan.setAttribute('title', 'Tables');
                     tableSpan.classList.add(csscls('database'));
-                    tableSpan.textContent = `${tables.size} tables`;
+                    tableSpan.textContent = `${this.tableFilters.length} tables `;
+
+                    // "Filter" toggle link (same pattern as "Show only duplicated")
+                    if (this.tableFilters.length > 1) {
+                        const filterLink = document.createElement('a');
+                        filterLink.classList.add(csscls('table-filter-toggle'));
+                        filterLink.textContent = 'Filter';
+                        filterLink.addEventListener('click', () => {
+                            this.tableToolbar.hidden = !this.tableToolbar.hidden;
+                            filterLink.textContent = this.tableToolbar.hidden ? 'Filter' : 'Hide filters';
+                        });
+                        tableSpan.append(filterLink);
+                    }
 
                     const sortIcon = document.createElement('span');
                     sortIcon.classList.add(csscls('sort-icon'));
@@ -46,12 +99,12 @@
                     sortIcon.addEventListener('click', () => {
                         if (tableSortState === 'none') {
                             tableSortState = 'asc';
-                            sortIcon.textContent = '\u2191';
+                            sortIcon.textContent = 'Sort \u2191';
                             originalTableData = [...data.statements];
                             data.statements.sort((a, b) => (a.table || '').localeCompare(b.table || ''));
                         } else if (tableSortState === 'asc') {
                             tableSortState = 'desc';
-                            sortIcon.textContent = '\u2193';
+                            sortIcon.textContent = 'Sort \u2193';
                             data.statements.sort((a, b) => (b.table || '').localeCompare(a.table || ''));
                         } else {
                             tableSortState = 'none';
@@ -62,6 +115,7 @@
                             }
                         }
                         this.list.set('data', data.statements);
+                        this.applyTableExclusions();
                     });
 
                     tableSpan.append(sortIcon);
@@ -72,6 +126,41 @@
                 tableSortState = 'none';
                 originalTableData = null;
             });
+        }
+
+        onTableFilterClick(el) {
+            el.classList.toggle(csscls('excluded'));
+            const table = el.getAttribute('rel');
+            const isExcluded = el.classList.contains(csscls('excluded'));
+
+            if (isExcluded) {
+                this.excludedTables.push(table);
+            } else {
+                this.excludedTables = this.excludedTables.filter(t => t !== table);
+            }
+
+            this.applyTableExclusions();
+        }
+
+        setAllTablesVisible(visible) {
+            this.excludedTables = visible ? [] : [...this.tableFilters];
+            const filters = this.tableToolbar.querySelectorAll(`.${csscls('filter')}:not(.${csscls('table-toggle')})`);
+            for (const f of filters) {
+                f.classList.toggle(csscls('excluded'), !visible);
+            }
+            this.applyTableExclusions();
+        }
+
+        applyTableExclusions() {
+            const items = this.list.el.querySelectorAll(`.${csscls('list-item')}`);
+            for (const item of items) {
+                const itemTable = item.getAttribute('data-table') || '';
+                if (this.excludedTables.includes(itemTable)) {
+                    item.hidden = true;
+                } else if (itemTable) {
+                    item.hidden = false;
+                }
+            }
         }
 
         buildTable(rows, opts = {}) {
@@ -272,6 +361,11 @@
         itemRenderer(li, stmt, filters) {
             // Call parent's item renderer first
             super.itemRenderer(li, stmt, filters);
+
+            // Tag list item with its table name for filtering
+            if (stmt.table) {
+                li.setAttribute('data-table', stmt.table);
+            }
 
             // Add explain button if available
             if (stmt.explain) {

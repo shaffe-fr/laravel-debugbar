@@ -458,3 +458,34 @@ span.phpdebugbar-widgets-visual-link a {
 .phpdebugbar-widgets-cache table.phpdebugbar-widgets-params .phpdebugbar-widgets-name {
     width: 45%;
 }
+
+/* Table filter toolbar */
+div.phpdebugbar-widgets-sqlqueries div.phpdebugbar-widgets-table-toolbar {
+    border-bottom: 1px solid var(--debugbar-border);
+    padding: 2px 6px;
+    flex-shrink: 0;
+    order: 1;
+}
+
+div.phpdebugbar-widgets-sqlqueries div.phpdebugbar-widgets-table-toolbar a.phpdebugbar-widgets-filter {
+    float: left;
+    margin: 1px 2px;
+    background: var(--debugbar-red-vivid);
+}
+
+div.phpdebugbar-widgets-sqlqueries div.phpdebugbar-widgets-table-toolbar a.phpdebugbar-widgets-filter.phpdebugbar-widgets-excluded {
+    background: var(--debugbar-background);
+    color: var(--debugbar-text);
+}
+
+div.phpdebugbar-widgets-sqlqueries div.phpdebugbar-widgets-table-toolbar a.phpdebugbar-widgets-table-toggle {
+    background: var(--debugbar-header-text);
+    font-weight: bold;
+    margin-right: 6px;
+}
+
+div.phpdebugbar-widgets-sqlqueries a.phpdebugbar-widgets-table-filter-toggle {
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+}
