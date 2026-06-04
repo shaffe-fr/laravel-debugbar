@@ -148,6 +148,10 @@ return [
         'config' => [
             'masked' => [],
         ],
+        'models' => [
+            'source' => env('DEBUGBAR_OPTIONS_MODELS_SOURCE', false), // Track the origin (file:line) of each model event (has some overhead)
+            'backtrace_exclude_paths' => [],                           // Additional paths to exclude from backtrace
+        ],
         'cache' => [
             'values' => env('DEBUGBAR_OPTIONS_CACHE_VALUES', true), // Collect cache values
             'timeline' => env('DEBUGBAR_OPTIONS_CACHE_TIMELINE', false),  // Add cache events to the timeline

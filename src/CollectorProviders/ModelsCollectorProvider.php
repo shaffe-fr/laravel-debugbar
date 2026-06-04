@@ -4,15 +4,23 @@ declare(strict_types=1);
 
 namespace Fruitcake\LaravelDebugbar\CollectorProviders;
 
-use DebugBar\DataCollector\ObjectCountCollector;
+use Fruitcake\LaravelDebugbar\DataCollector\ModelsCollector;
 use Illuminate\Contracts\Events\Dispatcher;
 
 class ModelsCollectorProvider extends AbstractCollectorProvider
 {
     public function __invoke(Dispatcher $events, array $options): void
     {
-        $modelsCollector = new ObjectCountCollector('models');
+        $modelsCollector = new ModelsCollector('models');
         $this->addCollector($modelsCollector);
+
+        if ($options['source'] ?? false) {
+            $modelsCollector->setFindSource(true);
+        }
+
+        if (($options['backtrace_exclude_paths'] ?? []) !== []) {
+            $modelsCollector->mergeBacktraceExcludePaths($options['backtrace_exclude_paths']);
+        }
 
         $eventList = ['retrieved', 'created', 'updated', 'deleted'];
         $modelsCollector->setKeyMap(array_combine($eventList, array_map('ucfirst', $eventList)));

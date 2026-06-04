@@ -1,0 +1,25 @@
+/* Models widget — minimal styles, reuses .params and .list-item from debugbar */
+
+.phpdebugbar-widgets-models .phpdebugbar-widgets-models-class {
+    font-family: var(--debugbar-font-family-code, monospace);
+    font-size: 12px;
+}
+
+.phpdebugbar-widgets-models .phpdebugbar-widgets-models-count {
+    margin-left: 8px;
+    padding: 1px 6px;
+    background: var(--debugbar-background-alt, rgba(0, 0, 0, 0.05));
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--debugbar-muted, #888);
+}
+
+.phpdebugbar-widgets-models .phpdebugbar-widgets-models-status-badge {
+    margin-left: 10px;
+    font-size: 11px;
+    color: var(--debugbar-muted, #888);
+}
+
+.phpdebugbar-widgets-models table.phpdebugbar-widgets-params {
+    border-left: 2px solid var(--debugbar-border, #ddd);
+}
